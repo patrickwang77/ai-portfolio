@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產指揮中心 v6.8.9 | Asset Command</title>
+    <title>目標資產指揮中心 v6.8.9 | Asset Command</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
@@ -235,7 +235,7 @@
                     <i class="ph-bold ph-chart-polar text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg md:text-xl font-bold tracking-tight text-white leading-tight"><span id="appTitleYear">2030</span> 資產指揮中心 <span class="gemini-gradient-text">v6.8.9</span></h1>
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight text-white leading-tight"><span id="appTitleYear"></span> 目標資產達成指揮中心 <span class="gemini-gradient-text">v6.8.9</span></h1>
                 </div>
             </div>
 
@@ -669,7 +669,7 @@
             const targetYear = settings.targetDate ? new Date(settings.targetDate).getFullYear() : '2030';
             const titleEl = document.getElementById('appTitleYear');
             if(titleEl) titleEl.innerText = targetYear;
-            document.title = `${targetYear} 資產指揮中心 v6.8.9 | Asset Command`;
+            document.title = `${targetYear} 目標資產指揮中心 v6.8.9 | Asset Command`;
         }
 
         // --- Helper ---
@@ -1299,4 +1299,5 @@
         }
     </script>
 </body>
+
 </html>
