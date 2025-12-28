@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資產指揮中心 v6.8.9 | Asset Command</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Markdown Parser (Marked.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0F172A; /* Slate 900 */
+            color: #E2E8F0; /* Slate 200 */
+        }
+        
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: white;
+            transition: all 0.2s;
+        }
+        .glass-input:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: #3B82F6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        input[type="date"] {
+            color-scheme: dark;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(1);
+        }
+        
+        /* --- AI Report Standardized Styles (Modal & Tab) --- */
+        .ai-report-style h1 { 
+            font-size: 1.8rem; 
+            font-weight: 800; 
+            color: #F8FAFC; 
+            margin-top: 2rem; 
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #334155; 
+            letter-spacing: 0.05em;
+        }
+        .ai-report-style h2 { 
+            font-size: 1.4rem; 
+            font-weight: 700; 
+            color: #38BDF8; 
+            margin-top: 2rem; 
+            margin-bottom: 1rem;
+            border-left: 4px solid #38BDF8;
+            padding-left: 12px;
+        }
+        .ai-report-style h3 { 
+            font-size: 1.15rem; 
+            font-weight: 700; 
+            color: #FBBF24; 
+            margin-top: 1.5rem; 
+            margin-bottom: 0.8rem;
+        }
+        .ai-report-style p { 
+            margin-bottom: 1rem; 
+            line-height: 1.8; 
+            color: #CBD5E1; 
+            font-size: 1rem;
+        }
+        .ai-report-style ul, .ai-report-style ol { 
+            padding-left: 1.5rem; 
+            margin-bottom: 1.5rem; 
+            color: #CBD5E1; 
+        }
+        .ai-report-style ul { list-style: disc; }
+        .ai-report-style ol { list-style: decimal; }
+        .ai-report-style li { margin-bottom: 0.5rem; }
+        .ai-report-style strong { 
+            color: #34D399; 
+            font-weight: 700; 
+        }
+        .ai-report-style blockquote {
+            border-left: 4px solid #6366F1;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+        .ai-report-style table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        .ai-report-style th {
+            background-color: #1E293B;
+            color: #38BDF8;
+            font-weight: bold;
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #334155;
+        }
+        .ai-report-style td {
+            padding: 10px;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+        }
+
+        @media print {
+            body { background-color: white; color: black; }
+            .glass-panel { background: white; color: black; border: 1px solid #ddd; box-shadow: none; }
+            .ai-report-style h1, .ai-report-style h2, .ai-report-style h3, .ai-report-style p, .ai-report-style li, .ai-report-style td { color: black !important; }
+            .no-print { display: none !important; }
+            #aiModal { position: static; background: white; }
+            .ai-report-style { overflow: visible; }
+        }
+
+        .table-input-dark {
+            background-color: rgba(30, 41, 59, 0.8); 
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #E2E8F0; 
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .table-input-dark:focus {
+            background-color: rgba(30, 41, 59, 1);
+            border-color: #3B82F6;
+            outline: none;
+        }
+        
+        .table-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 4px 20px 4px 4px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            color: #E2E8F0;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0px center;
+            background-size: 14px;
+        }
+        .table-select option {
+            background-color: #1E293B;
+            color: white;
+        }
+
+        .currency-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.2s;
+            min-width: 70px;
+        }
+        .currency-btn.usd { background-color: rgba(16, 185, 129, 0.2); color: #34D399; border-color: rgba(16, 185, 129, 0.5); }
+        .currency-btn.usd:hover { background-color: rgba(16, 185, 129, 0.3); }
+        .currency-btn.twd { background-color: rgba(59, 130, 246, 0.2); color: #60A5FA; border-color: rgba(59, 130, 246, 0.5); }
+        .currency-btn.twd:hover { background-color: rgba(59, 130, 246, 0.3); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .gemini-gradient-text {
+            background: linear-gradient(to right, #60A5FA, #A78BFA, #F472B6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Checkbox Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #3B82F6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #3B82F6; }
+        
+        #toast { visibility: hidden; transform: translateY(20px); opacity: 0; transition: all 0.3s ease-in-out; }
+        #toast.show { visibility: visible; transform: translateY(0); opacity: 1; }
+        #toast.error { border-color: #EF4444; }
+        #toast.error i { color: #EF4444; }
+        
+        /* Animation for details summary */
+        details summary::-webkit-details-marker { display: none; }
+        details summary { list-style: none; }
+        details[open] summary ~ * { animation: sweep .3s ease-in-out; }
+        @keyframes sweep {
+            0%    {opacity: 0; transform: translateY(-10px)}
+            100%  {opacity: 1; transform: translateY(0)}
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 no-print">
+        <div class="container mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="ph-bold ph-chart-polar text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight text-white leading-tight"><span id="appTitleYear">2030</span> 資產指揮中心 <span class="gemini-gradient-text">v6.8.9</span></h1>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex space-x-1 bg-slate-800 p-1 rounded-lg">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-slate-700 text-white shadow">戰情儀表板</button>
+                <button onclick="switchTab('portfolio')" id="btn-portfolio" class="px-4 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-white transition-all hover:bg-slate-700/50">投資組合管理</button>
+                <button onclick="switchTab('simulation')" id="btn-simulation" class="px-4 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-white transition-all hover:bg-slate-700/50">複利模擬試算</button>
+                <button onclick="switchTab('blueprint')" id="btn-blueprint" class="px-4 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-white transition-all hover:bg-slate-700/50">投資藍圖 Report</button>
+            </nav>
+
+            <div class="w-9 h-9"></div> 
+        </div>
+        
+        <!-- Mobile Nav -->
+        <div class="md:hidden flex border-t border-slate-800 overflow-x-auto no-print">
+             <button onclick="switchTab('dashboard')" class="flex-1 py-3 min-w-[80px] text-xs font-medium text-center border-b-2 border-blue-500 text-white">儀表板</button>
+             <button onclick="switchTab('portfolio')" class="flex-1 py-3 min-w-[80px] text-xs font-medium text-center border-b-2 border-transparent text-slate-400">設定</button>
+             <button onclick="switchTab('simulation')" class="flex-1 py-3 min-w-[80px] text-xs font-medium text-center border-b-2 border-transparent text-slate-400">試算</button>
+             <button onclick="switchTab('blueprint')" class="flex-1 py-3 min-w-[80px] text-xs font-medium text-center border-b-2 border-transparent text-slate-400">報告</button>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 md:p-6">
+
+        <!-- ==================== DASHBOARD VIEW ==================== -->
+        <div id="dashboard-view" class="tab-content active space-y-6">
+            
+            <!-- 1. Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Goal Asset -->
+                <div class="glass-panel p-5 rounded-xl relative overflow-hidden border-l-4 border-yellow-500">
+                    <div class="absolute -right-6 -top-6 w-32 h-32 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-slate-400 text-xs uppercase tracking-wider font-bold">總資產目標 (Target)</p>
+                        <i class="ph-duotone ph-flag-checkered text-yellow-500 text-2xl"></i>
+                    </div>
+                    <div class="flex items-baseline">
+                        <span class="text-5xl md:text-6xl font-mono font-bold text-yellow-400 tracking-tight" id="goalDisplay">0</span>
+                        <span class="ml-2 text-sm text-yellow-500/80">萬 TWD</span>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-xs mb-1 text-slate-400">
+                            <span>達成率</span>
+                            <span id="headerProgress" class="text-yellow-400 font-bold">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div id="totalProgressBar" class="bg-yellow-500 h-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Asset -->
+                <div class="glass-panel p-5 rounded-xl border-l-4 border-blue-500 flex flex-col justify-center">
+                    <div class="flex justify-between items-start mb-1">
+                        <p class="text-slate-400 text-xs uppercase tracking-wider font-bold">目前總資產 (含現金)</p>
+                        <i class="ph-duotone ph-wallet text-blue-500 text-2xl"></i>
+                    </div>
+                    <div class="flex items-baseline">
+                        <span class="text-3xl md:text-4xl font-mono font-bold text-blue-400 tracking-tight" id="totalAssetDisplay">0</span>
+                        <span class="ml-2 text-sm text-blue-500/80">萬 TWD</span>
+                    </div>
+                </div>
+
+                <!-- Gaps & Cash -->
+                <div class="grid grid-rows-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl flex items-center justify-between border-l-4 border-red-500">
+                        <div>
+                            <p class="text-slate-400 text-xs uppercase tracking-wider">資金缺口</p>
+                            <p class="text-xl font-mono font-bold text-red-400 mt-1">-<span id="gapDisplay">0</span> 萬</p>
+                        </div>
+                        <i class="ph-duotone ph-trend-up text-red-500/30 text-3xl"></i>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl flex items-center justify-between border-l-4 border-emerald-500">
+                        <div>
+                            <p class="text-slate-400 text-xs uppercase tracking-wider">備用彈藥 (現金)</p>
+                            <p class="text-xl font-mono font-bold text-emerald-400 mt-1"><span id="cashDisplay">0</span> 萬</p>
+                        </div>
+                        <i class="ph-duotone ph-coins text-emerald-500/30 text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. AI Advisor Section -->
+            <div class="glass-panel rounded-xl p-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
+                <div class="bg-slate-900 rounded-lg p-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl"></div>
+                    <div class="flex items-start gap-4 z-10">
+                        <div class="p-3 bg-slate-800 rounded-xl text-purple-400 shrink-0">
+                            <i class="ph-duotone ph-brain text-4xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-1">AI 首席戰略顧問</h3>
+                            <p class="text-sm text-slate-400 max-w-lg leading-relaxed">
+                                點擊分析按鈕，AI 將根據您的最新資產配置與目標，重新執行深度健檢並產生行動報告。
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="openAiModal(true)" class="w-full md:w-auto px-6 py-3 bg-white text-slate-900 hover:bg-slate-200 rounded-lg font-bold shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2 z-10 whitespace-nowrap">
+                        <i class="ph-bold ph-sparkle text-purple-600"></i> 立即分析
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Charts & Breakdown -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Allocation Chart -->
+                <div class="glass-panel p-6 rounded-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-200">資產配置現況</h3>
+                        <span class="text-xs px-2 py-1 bg-slate-800 rounded text-slate-400 border border-slate-700">不含現金</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="allocationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tactical Progress Bars -->
+                <div class="glass-panel p-6 rounded-xl flex flex-col justify-center">
+                    <h3 class="font-bold text-slate-200 mb-5 flex items-center gap-2">
+                        <i class="ph-fill ph-chart-bar text-blue-400"></i> 戰術板塊達成度
+                    </h3>
+                    <div class="space-y-6" id="progressBarsContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PORTFOLIO VIEW ==================== -->
+        <div id="portfolio-view" class="tab-content space-y-6">
+            <!-- Settings Area -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-5 rounded-xl md:col-span-2">
+                    <h3 class="font-bold text-white mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
+                        <i class="ph-fill ph-target"></i> 戰略目標設定
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">總資產目標 (萬 TWD)</label>
+                                <input type="text" id="settingTotalGoal" class="glass-input w-full p-2 rounded font-mono text-lg font-bold text-emerald-400" value="2,000" onchange="updateSettings(); formatNumberInput(this)">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">預期達成日期 (Target Date)</label>
+                                <input type="date" id="settingTargetDate" class="glass-input w-full p-2 rounded font-mono text-white" onchange="updateSettings()">
+                            </div>
+                            <div class="space-y-3">
+                                <label class="block text-xs text-slate-400">資產配置比例 (%)</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div><label class="text-[10px] text-blue-400 block">台股</label><input type="number" id="settingTwPct" class="glass-input w-full p-2 rounded font-mono text-center" value="40" onchange="updateSettings()"></div>
+                                    <div><label class="text-[10px] text-cyan-400 block">美股</label><input type="number" id="settingUsPct" class="glass-input w-full p-2 rounded font-mono text-center" value="30" onchange="updateSettings()"></div>
+                                    <div><label class="text-[10px] text-yellow-400 block">債券</label><input type="number" id="settingBondPct" class="glass-input w-full p-2 rounded font-mono text-center" value="30" onchange="updateSettings()"></div>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-500">目前總和: <span id="totalPctDisplay" class="font-bold text-white">100%</span></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700/50 space-y-4">
+                            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">參數設定</h4>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">USD/TWD 匯率 (手動輸入)</label>
+                                <div class="relative">
+                                    <input type="number" id="settingFxRate" class="glass-input w-full p-2 rounded font-mono text-white" value="32.5" step="0.1" onchange="updateSettings()">
+                                    <span class="absolute right-3 top-2 text-slate-500 text-sm">TWD</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">再平衡門檻 (%)</label>
+                                <div class="relative">
+                                    <input type="number" id="settingRebalanceThreshold" class="glass-input w-full p-2 rounded font-mono text-white" value="5" onchange="updateSettings()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 rounded-xl border border-emerald-500/30 flex flex-col justify-center">
+                    <h4 class="text-emerald-400 font-bold mb-3 flex items-center gap-2">
+                        <i class="ph-fill ph-money"></i> 現金部位 (War Chest)
+                    </h4>
+                    <div class="mb-4">
+                        <label class="text-sm text-slate-400">目前閒置資金 (萬):</label>
+                        <input type="number" id="cashInput" value="100" oninput="updateCalculations()" class="glass-input w-full mt-1 p-2 rounded font-mono text-xl font-bold text-right">
+                    </div>
+                    <div class="pt-4 border-t border-slate-700/50">
+                        <label class="text-sm text-slate-400">每月可投資金額 (萬):</label>
+                        <input type="number" id="settingMonthlyContribution" value="5" onchange="updateSettings()" class="glass-input w-full mt-1 p-2 rounded font-mono text-xl font-bold text-right text-blue-400">
+                        <p class="text-[10px] text-slate-500 mt-1">*此數值將納入AI評估計算</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Header Controls -->
+            <div class="flex justify-end mb-2">
+                 <button onclick="addNewRow()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm transition flex items-center gap-2">
+                    <i class="ph-bold ph-plus"></i> 新增標的
+                </button>
+            </div>
+
+            <!-- Table -->
+            <div class="glass-panel rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-400">
+                        <thead class="text-xs text-slate-200 uppercase bg-slate-800/50">
+                            <tr>
+                                <th class="px-4 py-3 sortable w-20" onclick="sortPortfolio('type')">類別 <i class="ph-fill ph-caret-up-down text-xs ml-1 opacity-50"></i></th>
+                                <th class="px-4 py-3 sortable w-20" onclick="sortPortfolio('symbol')">代號 <i class="ph-fill ph-caret-up-down text-xs ml-1 opacity-50"></i></th>
+                                <th class="px-4 py-3 sortable w-32" onclick="sortPortfolio('name')">名稱 <i class="ph-fill ph-caret-up-down text-xs ml-1 opacity-50"></i></th>
+                                <th class="px-4 py-3 w-24 text-center sortable" onclick="sortPortfolio('currency')">幣別 <i class="ph-fill ph-caret-up-down text-xs ml-1 opacity-50"></i></th>
+                                <th class="px-4 py-3 text-right sortable w-24" onclick="sortPortfolio('shares')">股數 <i class="ph-fill ph-caret-up-down text-xs ml-1 opacity-50"></i></th>
+                                <th class="px-4 py-3 text-right sortable w-24" onclick="sortPortfolio('price')">現價 <i class="ph-fill ph-caret-up-down text-xs ml-1 opacity-50"></i></th>
+                                <th class="px-4 py-3 text-right sortable w-36" onclick="sortPortfolio('value')">市值 (萬) <i class="ph-fill ph-caret-up-down text-xs ml-1 opacity-50"></i></th>
+                                <th class="px-4 py-3 text-center w-16">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700/50" id="portfolioTableBody"></tbody>
+                        <tfoot class="bg-slate-800/30 font-bold text-slate-200">
+                            <tr>
+                                <td colspan="6" class="px-4 py-3 text-right">總市值合計 (TWD)</td>
+                                <td class="px-4 py-3 text-right font-mono text-emerald-400" id="tableTotalValue">0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SIMULATION VIEW ==================== -->
+        <div id="simulation-view" class="tab-content space-y-6">
+             <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div class="md:col-span-4 space-y-6">
+                    <div class="glass-panel p-5 rounded-xl">
+                        <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i class="ph-fill ph-calculator text-cyan-400"></i> 試算參數設定</h3>
+                        <div class="space-y-4">
+                            <div><label class="block text-xs text-slate-400 mb-1">起始投入金額 (元)</label><input type="text" id="simInitial" value="20,000,000" class="glass-input w-full p-2 text-base md:text-lg rounded font-mono text-white" oninput="formatNumberInput(this); calculateSimulation()"></div>
+                            <div><label class="block text-xs text-slate-400 mb-1">每月定期定額 (元)</label><input type="text" id="simMonthly" value="50,000" class="glass-input w-full p-2 text-base md:text-lg rounded font-mono text-white" oninput="formatNumberInput(this); calculateSimulation()"></div>
+                            <div><label class="block text-xs text-slate-400 mb-1">預期年化報酬率 (%)</label><input type="number" id="simRate" value="7" step="0.1" class="glass-input w-full p-2 text-base md:text-lg rounded font-mono text-emerald-300 font-bold" oninput="calculateSimulation()"></div>
+                            <div><label class="block text-xs text-slate-400 mb-1">投資期間 (月數)</label><input type="number" id="simMonths" value="60" class="glass-input w-full p-2 text-base md:text-lg rounded font-mono text-white" oninput="calculateSimulation()"><p class="text-[10px] text-slate-500 mt-1 text-right">約 <span id="simYearsDisplay">5</span> 年</p></div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                         <div class="glass-panel p-4 rounded-xl overflow-hidden border-l-2 border-cyan-500/50 flex flex-col justify-center min-h-[100px]">
+                             <p class="text-[10px] text-slate-400 uppercase tracking-wider">總報酬率 (Total Return)</p>
+                             <p class="text-lg md:text-xl lg:text-2xl font-mono font-bold text-cyan-400 mt-1 tracking-tight break-words leading-tight" id="simTotalReturnPct">0%</p>
+                         </div>
+                         <div class="glass-panel p-4 rounded-xl overflow-hidden border-l-2 border-yellow-500/50 flex flex-col justify-center min-h-[100px]">
+                             <p class="text-[10px] text-slate-400 uppercase tracking-wider">年化報酬率 (CAGR)</p>
+                             <p class="text-lg md:text-xl lg:text-2xl font-mono font-bold text-yellow-400 mt-1 tracking-tight break-words leading-tight" id="simCAGR">0%</p>
+                         </div>
+                    </div>
+                </div>
+                <div class="md:col-span-8 space-y-6">
+                    <div class="glass-panel p-6 rounded-xl flex flex-col">
+                        <h3 class="font-bold text-slate-200 mb-4">資產成長曲線模擬</h3>
+                        <div class="w-full h-72 md:h-80">
+                            <canvas id="simulationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                         <div class="glass-panel p-4 rounded-xl overflow-hidden border-l-2 border-blue-500/50 flex flex-col justify-center min-h-[80px]">
+                             <p class="text-[10px] text-slate-400 uppercase tracking-wider">總投入本金</p>
+                             <p class="text-sm sm:text-base md:text-lg font-mono font-bold text-slate-200 mt-1 tracking-tight break-all" id="simTotalPrincipal">0</p>
+                         </div>
+                         <div class="glass-panel p-4 rounded-xl overflow-hidden border-l-2 border-emerald-500/50 flex flex-col justify-center min-h-[80px]">
+                             <p class="text-[10px] text-slate-400 uppercase tracking-wider">總投資回報</p>
+                             <p class="text-sm sm:text-base md:text-lg font-mono font-bold text-emerald-400 mt-1 tracking-tight break-all" id="simTotalInterest">0</p>
+                         </div>
+                         <div class="glass-panel p-4 rounded-xl overflow-hidden border-l-2 border-cyan-500/50 flex flex-col justify-center min-h-[80px]">
+                             <p class="text-[10px] text-slate-400 uppercase tracking-wider">期末總資產</p>
+                             <p class="text-sm sm:text-base md:text-lg font-mono font-bold text-cyan-400 mt-1 tracking-tight break-all" id="simFinalTotalBottom">0</p>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== BLUEPRINT VIEW ==================== -->
+        <div id="blueprint-view" class="tab-content space-y-8 pb-20">
+            <div id="blueprintContent" class="max-w-4xl mx-auto space-y-8">
+                <!-- Empty State -->
+                <div class="flex flex-col items-center justify-center py-20 text-center">
+                    <div class="p-4 rounded-full bg-slate-800 mb-4">
+                        <i class="ph-duotone ph-file-text text-4xl text-slate-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-300 mb-2">尚未生成報告</h3>
+                    <p class="text-slate-500 mb-6">請前往「戰情儀表板」呼叫 AI 顧問進行分析。</p>
+                    <button onclick="switchTab('dashboard')" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition">
+                        前往儀表板
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- AI Modal -->
+    <div id="aiModal" class="fixed inset-0 bg-black/90 z-[90] hidden flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-slate-800 rounded-xl w-full max-w-3xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
+            
+            <!-- Header -->
+            <div id="aiModalHeader" class="flex justify-between items-center p-5 border-b border-slate-700">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="ph-fill ph-robot text-purple-400"></i> AI 首席顧問分析
+                </h3>
+                <button onclick="closeAiModal()" class="text-slate-400 hover:text-white no-print"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-grow overflow-y-auto p-6">
+                <div id="aiInitialView"></div>
+
+                <div id="apiKeySection" class="hidden space-y-4">
+                    <div class="bg-slate-900/50 p-4 rounded-lg border border-purple-500/30 text-center">
+                        <p class="text-slate-300 mb-3">請輸入您的 Google Gemini API Key 以啟動顧問服務</p>
+                        <input type="password" id="modalApiKeyInput" class="glass-input w-full max-w-md mx-auto p-3 text-center block" placeholder="Paste your API Key here">
+                        <button onclick="saveKeyAndRun()" class="mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold">開始分析</button>
+                        
+                        <!-- Restored: API Key Guide (Foldable) -->
+                        <details class="mt-6 pt-4 border-t border-slate-700 text-left text-xs text-slate-400 space-y-2 cursor-pointer group">
+                            <summary class="font-bold text-slate-300 flex items-center gap-2 list-none">
+                                <span class="group-open:hidden">▶</span>
+                                <span class="hidden group-open:inline">▼</span>
+                                🔑 如何免費取得 API Key？ (點擊展開)
+                            </summary>
+                            <div class="pl-4 mt-2 space-y-2 animate-fadeIn">
+                                <p>1. 前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-400 hover:underline">Google AI Studio</a> 並登入。</p>
+                                <p>2. 點擊左上角的 <strong>"Create API key"</strong> 按鈕。</p>
+                                <p>3. 選擇 <strong>"Create API key in new project"</strong>。</p>
+                                <p>4. 複製產生的 Key (以 AIza 開頭)，貼回上方欄位。</p>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <div id="aiLoading" class="hidden text-center py-12">
+                    <div class="inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+                    <p class="text-purple-300 animate-pulse text-lg font-bold">AI 正在深度分析您的資產組合...</p>
+                    <p class="text-slate-500 text-sm mt-2">正在計算風險、評估目標達成率、撰寫行動建議</p>
+                </div>
+
+                <div id="aiResultContainer" class="hidden space-y-4">
+                    <div class="flex justify-end no-print">
+                         <button onclick="runAiAnalysis(true)" class="text-xs text-purple-400 hover:text-white flex items-center gap-1">
+                            <i class="ph-bold ph-arrows-clockwise"></i> 數據已更新？重新分析
+                        </button>
+                    </div>
+
+                    <!-- Use standardized style class -->
+                    <div id="aiResult" class="ai-report-style"></div>
+                    
+                    <!-- Updated: Removed the redundant "Save Report" button -->
+                    <div id="aiActionButtons" class="flex flex-col sm:flex-row justify-between pt-6 border-t border-slate-700 mt-6 gap-4 no-print">
+                        <button onclick="window.print()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold transition flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-printer"></i> 列印 / 另存 PDF
+                        </button>
+                        <div class="flex gap-2 justify-end">
+                            <button onclick="runAiAnalysis(true)" class="px-4 py-2 bg-purple-900/50 hover:bg-purple-800/50 text-purple-300 border border-purple-500/30 rounded-lg text-sm font-bold transition flex items-center gap-2">
+                                <i class="ph-bold ph-arrows-clockwise"></i> 重新分析
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 border border-slate-600 text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 z-[70]">
+        <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-xl"></i>
+        <span id="toastMessage" class="font-bold text-sm">操作成功</span>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/80 z-[80] hidden flex items-center justify-center p-4 backdrop-blur-sm" onclick="if(event.target===this)closeDeleteModal()">
+        <div class="bg-slate-800 rounded-xl max-w-sm w-full border border-slate-700 shadow-2xl p-6 text-center">
+            <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph-bold ph-trash text-red-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">確認刪除？</h3>
+            <p class="text-slate-400 text-sm mb-6">此操作無法復原，您確定要移除此投資標的嗎？</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeDeleteModal()" class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition">取消</button>
+                <button onclick="executeDelete()" class="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-bold transition">確認刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Data & Config ---
+        // Default settings
+        const defaultSettings = {
+            totalGoal: 2000,
+            targetDate: "2030-12-31",
+            ratios: { tw: 40, us: 30, bond: 30 },
+            geminiApiKey: "", 
+            fxRate: 32.5,
+            rebalanceThreshold: 5,
+            monthlyContribution: 5 // New Default: 50k TWD (displayed as 5)
+        };
+
+        let settings = { ...defaultSettings };
+
+        let portfolio = [
+            { id: 1, type: 'tw', symbol: '0050', name: '元大台灣50', shares: 10000, price: 185, currency: 'twd' },
+            { id: 2, type: 'us', symbol: 'VT', name: 'Vanguard Total', shares: 1000, price: 136, currency: 'usd' },
+            { id: 3, type: 'bond', symbol: '00937B', name: '群益ESG投等債', shares: 200000, price: 15.8, currency: 'twd' }
+        ];
+        
+        let savedAiReport = "";
+        let allocationChartInstance = null;
+        let simulationChartInstance = null;
+        let calculatedTotals = { tw: 0, us: 0, bond: 0 };
+        let sortDirection = 1;
+        let pendingDeleteIndex = -1;
+
+        // --- Initialization ---
+        window.onload = function() {
+            loadData(); // Robust loading
+            renderSettingsInputs();
+            updateAppTitle();
+            renderPortfolioTable();
+            updateCalculations();
+            calculateSimulation(); 
+            
+            if(savedAiReport) {
+                updateBlueprintTabContent(savedAiReport);
+            }
+        };
+        
+        function updateAppTitle() {
+            const targetYear = settings.targetDate ? new Date(settings.targetDate).getFullYear() : '2030';
+            const titleEl = document.getElementById('appTitleYear');
+            if(titleEl) titleEl.innerText = targetYear;
+            document.title = `${targetYear} 資產指揮中心 v6.8.9 | Asset Command`;
+        }
+
+        // --- Helper ---
+        function formatNumberInput(input) {
+            let value = input.value.replace(/,/g, '').replace(/[^\d.]/g, '');
+            if(value) {
+                let parts = value.split('.');
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                input.value = parts.join('.');
+            } else input.value = '';
+        }
+        function parseFormattedNumber(val) { return parseFloat(String(val).replace(/,/g, '')) || 0; }
+
+        // --- Toast Notification ---
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgSpan = document.getElementById('toastMessage');
+            const icon = document.getElementById('toastIcon');
+            
+            msgSpan.innerText = message;
+            
+            toast.className = "fixed bottom-6 right-6 bg-slate-800 border border-slate-600 text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 z-[70]";
+            icon.className = "ph-fill text-xl";
+            
+            if (type === 'error') {
+                toast.classList.add('error');
+                icon.classList.add('ph-warning-circle', 'text-red-500');
+            } else {
+                icon.classList.add('ph-check-circle', 'text-emerald-400');
+            }
+            
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // --- Sorting Logic ---
+        function sortPortfolio(key) {
+            sortDirection *= -1;
+            document.querySelectorAll('th.sortable i').forEach(el => el.className = 'ph-fill ph-caret-up-down text-xs ml-1 opacity-50');
+            const currentHeader = document.querySelector(`th[onclick="sortPortfolio('${key}')"] i`);
+            if(currentHeader) currentHeader.className = sortDirection === 1 ? 'ph-fill ph-caret-up text-xs ml-1 text-cyan-400' : 'ph-fill ph-caret-down text-xs ml-1 text-cyan-400';
+
+            portfolio.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+                
+                if(key === 'value') {
+                    const rateA = a.currency === 'usd' ? settings.fxRate : 1;
+                    const rateB = b.currency === 'usd' ? settings.fxRate : 1;
+                    valA = a.shares * a.price * rateA;
+                    valB = b.shares * b.price * rateB;
+                }
+
+                if (valA == null) valA = '';
+                if (valB == null) valB = '';
+
+                if (typeof valA === 'string') valA = valA.toUpperCase();
+                if (typeof valB === 'string') valB = valB.toUpperCase();
+
+                if (valA < valB) return -1 * sortDirection;
+                if (valA > valB) return 1 * sortDirection;
+                return 0;
+            });
+            renderPortfolioTable();
+        }
+
+        // --- UI Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const targetTab = document.getElementById(tabId + '-view');
+            if (targetTab) targetTab.classList.add('active');
+            
+            ['btn-dashboard', 'btn-portfolio', 'btn-simulation', 'btn-blueprint'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.className = "px-4 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-white transition-all hover:bg-slate-700/50";
+            });
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) activeBtn.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-slate-700 text-white shadow";
+            
+            if (tabId === 'dashboard' && allocationChartInstance) allocationChartInstance.resize();
+            if (tabId === 'simulation' && simulationChartInstance) simulationChartInstance.resize();
+            
+            if (tabId === 'blueprint') {
+                if (savedAiReport) updateBlueprintTabContent(savedAiReport);
+            }
+        }
+
+        function createChart(ctx, config) {
+            if (typeof Chart === 'undefined') { setTimeout(() => createChart(ctx, config), 100); return; }
+            return new Chart(ctx, config);
+        }
+
+        function updateAllocationChart(totals) {
+             const ctx = document.getElementById('allocationChart').getContext('2d');
+             if (allocationChartInstance) allocationChartInstance.destroy();
+             allocationChartInstance = createChart(ctx, { type: 'doughnut', data: { labels: ['台股', '美股', '債券'], datasets: [{ data: [totals.tw, totals.us, totals.bond], backgroundColor: ['#3B82F6', '#06B6D4', '#F59E0B'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'right', labels: { color: '#CBD5E1' } } } } });
+        }
+        
+        function updateProgressBars(totals, targets) {
+            const container = document.getElementById('progressBarsContainer');
+            const items = [{name:'台股 (TW)',key:'tw',t:targets.tw,c:'bg-blue-500'},{name:'美股 (US)',key:'us',t:targets.us,c:'bg-cyan-500'},{name:'債券 (Bond)',key:'bond',t:targets.bond,c:'bg-yellow-500'}];
+            let html = ''; items.forEach(i=>{ const v=totals[i.key], p=Math.min((v/i.t)*100,100).toFixed(1); html+=`<div><div class="flex justify-between text-sm mb-1"><span class="${i.c.replace('bg','text')} font-bold">${i.name}</span><span class="font-mono text-slate-300 text-xs">${v.toLocaleString(undefined,{maximumFractionDigits:1})} / ${i.t.toLocaleString(undefined,{maximumFractionDigits:0})}</span></div><div class="w-full bg-slate-800 h-2.5 rounded-full"><div class="${i.c} h-full rounded-full" style="width:${p}%"></div></div></div>`; });
+            container.innerHTML = html;
+        }
+
+        function renderPortfolioTable() {
+            const tbody = document.getElementById('portfolioTableBody'); tbody.innerHTML = '';
+            const tc = {'tw':'text-blue-400','us':'text-cyan-400','bond':'text-yellow-400'};
+            portfolio.forEach((item,i)=>{
+                let rate = 1; let priceColor = 'text-emerald-300';
+                if (item.currency === 'usd') { rate = settings.fxRate; priceColor = 'text-green-400'; }
+                const v = ((item.shares * item.price * rate) / 10000).toFixed(2);
+                const currencyBadge = item.currency === 'usd' 
+                    ? `<button class="currency-btn usd" onclick="updateItem(${i},'currency','twd')"><i class="ph-bold ph-hand-pointing"></i> USD</button>` 
+                    : `<button class="currency-btn twd" onclick="updateItem(${i},'currency','usd')"><i class="ph-bold ph-hand-pointing"></i> TWD</button>`;
+                
+                tbody.innerHTML += `
+                <tr class="hover:bg-slate-700/30 border-b border-slate-700/30">
+                    <td class="px-4 py-3 font-bold">
+                        <select onchange="updateItem(${i},'type',this.value)" class="table-select ${tc[item.type]}"><option value="tw" ${item.type==='tw'?'selected':''}>TW</option><option value="us" ${item.type==='us'?'selected':''}>US</option><option value="bond" ${item.type==='bond'?'selected':''}>Bond</option></select>
+                    </td>
+                    <td class="px-4 py-3">
+                        <input type="text" value="${item.symbol}" onchange="updateItem(${i},'symbol',this.value)" class="table-input-dark w-20 text-left font-bold">
+                    </td>
+                    <td class="px-4 py-3">
+                        <input type="text" value="${item.name || ''}" placeholder="名稱" onchange="updateItem(${i},'name',this.value)" class="table-input-dark w-full text-left text-sm">
+                    </td>
+                    <td class="px-4 py-3 text-center">${currencyBadge}</td>
+                    <td class="px-4 py-3 text-right">
+                        <input type="text" value="${item.shares.toLocaleString()}" onchange="updateItem(${i},'shares',this.value)" class="table-input-dark w-24 font-mono text-right">
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <input type="text" value="${item.price.toLocaleString()}" onchange="updateItem(${i},'price',this.value)" class="table-input-dark w-24 font-mono text-right ${priceColor}">
+                    </td>
+                    <td class="px-4 py-3 text-right font-mono text-white w-32">${v}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="deleteItem(${i})" class="text-slate-500 hover:text-red-400"><i class="ph-bold ph-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function updateItem(i,f,v) { if(f==='shares'||f==='price') portfolio[i][f]=parseFormattedNumber(v); else portfolio[i][f]=v; renderPortfolioTable(); updateCalculations(); }
+        function addNewRow() { portfolio.push({id:Date.now(), type:'tw', symbol:'NEW', name:'', shares:0, price:10, currency:'twd'}); renderPortfolioTable(); }
+        
+        function deleteItem(i) { pendingDeleteIndex = i; document.getElementById('deleteModal').classList.remove('hidden'); }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); pendingDeleteIndex = -1; }
+        function executeDelete() { if(pendingDeleteIndex > -1) { portfolio.splice(pendingDeleteIndex, 1); renderPortfolioTable(); updateCalculations(); showToast('已刪除標的'); closeDeleteModal(); } }
+
+        function updateSettings() { 
+             const totalGoalInput = document.getElementById('settingTotalGoal');
+             const targetDateInput = document.getElementById('settingTargetDate');
+             const twPctInput = document.getElementById('settingTwPct');
+             const usPctInput = document.getElementById('settingUsPct');
+             const bondPctInput = document.getElementById('settingBondPct');
+             const rebalanceThresholdInput = document.getElementById('settingRebalanceThreshold');
+             const fxRateInput = document.getElementById('settingFxRate');
+             const monthlyContributionInput = document.getElementById('settingMonthlyContribution'); // New Input
+
+             if (totalGoalInput) settings.totalGoal = parseFormattedNumber(totalGoalInput.value);
+             if (targetDateInput) settings.targetDate = targetDateInput.value;
+             if (twPctInput) settings.ratios.tw = parseFloat(twPctInput.value)||0;
+             if (usPctInput) settings.ratios.us = parseFloat(usPctInput.value)||0;
+             if (bondPctInput) settings.ratios.bond = parseFloat(bondPctInput.value)||0;
+             if (rebalanceThresholdInput) settings.rebalanceThreshold = parseFloat(rebalanceThresholdInput.value)||5;
+             if (fxRateInput) settings.fxRate = parseFloat(fxRateInput.value)||32.5;
+             if (monthlyContributionInput) settings.monthlyContribution = parseFloat(monthlyContributionInput.value) || 0; // Update setting
+             
+             const totalPctDisplay = document.getElementById('totalPctDisplay');
+             if (totalPctDisplay) totalPctDisplay.innerText = (settings.ratios.tw+settings.ratios.us+settings.ratios.bond) + '%';
+             
+             updateAppTitle(); 
+             if (typeof updateCalculations === 'function') {
+                 updateCalculations();
+             }
+        }
+
+        function renderSettingsInputs() {
+             document.getElementById('settingTotalGoal').value = settings.totalGoal.toLocaleString();
+             document.getElementById('settingTargetDate').value = settings.targetDate;
+             document.getElementById('settingTwPct').value = settings.ratios.tw;
+             document.getElementById('settingUsPct').value = settings.ratios.us;
+             document.getElementById('settingBondPct').value = settings.ratios.bond;
+             document.getElementById('settingFxRate').value = settings.fxRate;
+             
+             // Render new input
+             const monthlyInput = document.getElementById('settingMonthlyContribution');
+             if(monthlyInput) monthlyInput.value = settings.monthlyContribution;
+        }
+
+        // --- Robust Data Handling ---
+        function saveData() { 
+            try {
+                const dataToSave = {
+                    version: "6.8.9", // Bump version
+                    portfolio, 
+                    cash: document.getElementById('cashInput').value, 
+                    settings, 
+                    savedAiReport 
+                };
+                localStorage.setItem('assetDashboardDataV6', JSON.stringify(dataToSave)); 
+            } catch (e) {
+                console.error("Save failed", e);
+                showToast('儲存失敗', 'error');
+            }
+        }
+
+        function loadData() { 
+            try {
+                const saved = localStorage.getItem('assetDashboardDataV6');
+                let d = null;
+                
+                if(saved) { 
+                    d = JSON.parse(saved); 
+                } else {
+                    const oldSaved = localStorage.getItem('assetDashboardDataV3');
+                    if(oldSaved) d = JSON.parse(oldSaved);
+                }
+
+                if(d) {
+                    // Safely merge settings
+                    if(d.settings) {
+                        settings = { ...defaultSettings, ...d.settings };
+                        if(d.settings.ratios) settings.ratios = { ...defaultSettings.ratios, ...d.settings.ratios };
+                    }
+                    
+                    if(Array.isArray(d.portfolio)) {
+                        // DEEP SANITIZATION: Fix undefined fields to prevent API crashes
+                        portfolio = d.portfolio.map(item => ({
+                            id: item.id || Date.now(),
+                            type: item.type || 'tw',
+                            symbol: item.symbol || 'UNK',
+                            name: item.name || '',
+                            shares: Number(item.shares) || 0,
+                            price: Number(item.price) || 0,
+                            currency: item.currency || 'twd'
+                        }));
+                    }
+                    if(d.cash !== undefined) document.getElementById('cashInput').value = d.cash; 
+                    if(d.savedAiReport) savedAiReport = d.savedAiReport;
+                }
+            } catch(e) {
+                console.error("Load failed, resetting to defaults", e);
+                showToast('數據修復中，已重置設定', 'error');
+            }
+        }
+
+        function calculateSimulation() {
+            const initial = parseFormattedNumber(document.getElementById('simInitial').value);
+            const monthly = parseFormattedNumber(document.getElementById('simMonthly').value);
+            const rate = parseFloat(document.getElementById('simRate').value) || 0;
+            const months = parseFloat(document.getElementById('simMonths').value) || 0;
+            
+            const yearsDisplay = document.getElementById('simYearsDisplay');
+            if (yearsDisplay) yearsDisplay.innerText = (months / 12).toFixed(1);
+            
+            const monthlyRate = (rate / 100) / 12;
+            let currentBalance = initial, currentPrincipal = initial;
+            let labels = ['Start'], balanceData = [initial], principalData = [initial];
+            let interestData = [0]; 
+
+            for (let i = 1; i <= months; i++) {
+                currentBalance = currentBalance * (1 + monthlyRate) + monthly; 
+                currentPrincipal += monthly;
+                if (months <= 24 || i % 6 === 0 || i === months) {
+                     const year = Math.floor(i / 12), mo = i % 12;
+                     labels.push(year > 0 ? `Y${year}` : `M${mo}`);
+                     balanceData.push(Math.round(currentBalance)); 
+                     principalData.push(Math.round(currentPrincipal)); 
+                     interestData.push(Math.round(currentBalance - currentPrincipal)); 
+                }
+            }
+            
+            const elTotalReturnPct = document.getElementById('simTotalReturnPct');
+            if(elTotalReturnPct) {
+                const totalReturnPct = currentPrincipal > 0 ? ((currentBalance - currentPrincipal) / currentPrincipal * 100) : 0;
+                elTotalReturnPct.innerText = "+" + totalReturnPct.toFixed(2) + "%";
+            }
+            
+            const elCAGR = document.getElementById('simCAGR');
+            if(elCAGR) elCAGR.innerText = rate.toFixed(2) + "%"; 
+
+            const elFinalTotalBottom = document.getElementById('simFinalTotalBottom');
+            if(elFinalTotalBottom) elFinalTotalBottom.innerText = Math.round(currentBalance).toLocaleString();
+
+            const elTotalPrincipal = document.getElementById('simTotalPrincipal');
+            if(elTotalPrincipal) elTotalPrincipal.innerText = Math.round(currentPrincipal).toLocaleString();
+            
+            const elTotalInterest = document.getElementById('simTotalInterest');
+            if(elTotalInterest) elTotalInterest.innerText = "+" + Math.round(currentBalance - currentPrincipal).toLocaleString();
+            
+            renderSimulationChart(labels, balanceData, principalData, interestData);
+        }
+        
+        function renderSimulationChart(labels, balanceData, principalData, interestData) {
+            const ctx = document.getElementById('simulationChart').getContext('2d');
+            if (simulationChartInstance) simulationChartInstance.destroy();
+            simulationChartInstance = createChart(ctx, { 
+                type: 'line', 
+                data: { 
+                    labels: labels, 
+                    datasets: [
+                        { 
+                            label: '期末總資產', 
+                            data: balanceData, 
+                            borderColor: '#34D399', 
+                            backgroundColor: 'rgba(52, 211, 153, 0.1)', 
+                            borderWidth: 3, 
+                            fill: true, 
+                            tension: 0.4,
+                            pointRadius: 0,
+                            pointHoverRadius: 6
+                        }, 
+                        { 
+                            label: '投入本金', 
+                            data: principalData, 
+                            borderColor: '#3B82F6', 
+                            backgroundColor: 'transparent', 
+                            borderWidth: 2, 
+                            borderDash: [5, 5], 
+                            fill: false, 
+                            tension: 0.4,
+                            pointRadius: 0,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: '預估報酬',
+                            data: interestData,
+                            borderColor: 'transparent',
+                            backgroundColor: 'transparent',
+                            pointRadius: 0,
+                            hidden: true
+                        }
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleFont: { size: 14, family: "'Noto Sans TC'" },
+                            bodyFont: { size: 13, family: "'JetBrains Mono'" },
+                            padding: 12,
+                            boxPadding: 6,
+                            callbacks: {
+                                title: (tooltipItems) => `時間點：${tooltipItems[0].label}`,
+                                label: (context) => {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) label += context.parsed.y.toLocaleString();
+                                    return label;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } }, 
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', callback: function(value) { return value.toLocaleString(); } } } 
+                    } 
+                } 
+            });
+        }
+
+        function updateCalculations() {
+            let totals = { tw: 0, us: 0, bond: 0 };
+            portfolio.forEach(item => {
+                let rate = 1; if (item.currency === 'usd') rate = settings.fxRate;
+                const value = (item.shares * item.price * rate) / 10000; 
+                if (totals[item.type] !== undefined) totals[item.type] += value;
+            });
+            calculatedTotals = totals;
+            const cash = parseFloat(document.getElementById('cashInput').value) || 0;
+            const investedTotal = totals.tw + totals.us + totals.bond;
+            const grandTotal = investedTotal + cash;
+            const gap = settings.totalGoal - grandTotal;
+            const progressPct = (grandTotal / settings.totalGoal) * 100;
+
+            document.getElementById('totalAssetDisplay').innerText = grandTotal.toLocaleString(undefined, {maximumFractionDigits: 1});
+            document.getElementById('goalDisplay').innerText = parseFloat(settings.totalGoal).toLocaleString();
+            document.getElementById('gapDisplay').innerText = gap.toLocaleString(undefined, {maximumFractionDigits: 1});
+            document.getElementById('cashDisplay').innerText = cash.toLocaleString();
+            document.getElementById('headerProgress').innerText = `${progressPct.toFixed(1)}%`;
+            document.getElementById('totalProgressBar').style.width = `${Math.min(progressPct, 100)}%`;
+            
+            const tableTotalEl = document.getElementById('tableTotalValue');
+            if(tableTotalEl) {
+                 tableTotalEl.innerText = investedTotal.toLocaleString(undefined, {maximumFractionDigits: 2}) + ' 萬';
+            }
+
+            const targetAmounts = { tw: settings.totalGoal * (settings.ratios.tw / 100), us: settings.totalGoal * (settings.ratios.us / 100), bond: settings.totalGoal * (settings.ratios.bond / 100) };
+            updateAllocationChart(totals);
+            updateProgressBars(totals, targetAmounts);
+            saveData();
+        }
+
+        // Modified openAiModal to accept forceRun
+        function openAiModal(forceRun = false) {
+            document.getElementById('aiModal').classList.remove('hidden');
+            
+            if (forceRun) {
+                // If force running, hide previous result immediately to show it's working
+                document.getElementById('aiResultContainer').classList.add('hidden');
+                document.getElementById('apiKeySection').classList.add('hidden');
+            } else if (savedAiReport) {
+                 // If not forcing, show saved report
+                 const result = document.getElementById('aiResult');
+                 result.innerHTML = marked.parse(savedAiReport);
+                 document.getElementById('aiResultContainer').classList.remove('hidden');
+                 document.getElementById('aiActionButtons').classList.remove('hidden');
+            }
+
+            if(settings.geminiApiKey) {
+                document.getElementById('modalApiKeyInput').value = settings.geminiApiKey;
+                document.getElementById('apiKeySection').classList.add('hidden');
+                
+                // If force run OR no saved report, run analysis
+                if(forceRun || !savedAiReport) {
+                    runAiAnalysis();
+                }
+            } else {
+                // No API key, show input section
+                document.getElementById('apiKeySection').classList.remove('hidden');
+                document.getElementById('aiLoading').classList.add('hidden');
+                // If forcing run but no key, result is hidden by logic above
+            }
+        }
+
+        function closeAiModal() {
+            document.getElementById('aiModal').classList.add('hidden');
+        }
+
+        function saveKeyAndRun() {
+            const key = document.getElementById('modalApiKeyInput').value.trim();
+            if(key) {
+                settings.geminiApiKey = key;
+                saveData();
+                document.getElementById('apiKeySection').classList.add('hidden');
+                runAiAnalysis();
+            }
+        }
+        
+        function saveAiReport() {
+            saveData();
+            showToast('AI 報告已儲存');
+        }
+
+        async function runAiAnalysis(forceRun = false) {
+            const loading = document.getElementById('aiLoading');
+            const container = document.getElementById('aiResultContainer');
+            const btns = document.getElementById('aiActionButtons');
+            const cash = parseFloat(document.getElementById('cashInput').value) || 0;
+
+            if (!loading || !container || !btns) {
+                console.error('Required DOM elements for AI analysis not found');
+                return;
+            }
+
+            // --- Precise Time Calculation ---
+            const now = new Date();
+            const target = new Date(settings.targetDate);
+            const diffTime = Math.abs(target - now);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            const remainingYears = (diffDays / 365.25).toFixed(1);
+
+            // ==========================================
+            // 新增：JavaScript 精確計算 CAGR (年化報酬率)
+            // ==========================================
+            const currentTotal = parseFloat(document.getElementById('totalAssetDisplay').innerText.replace(/,/g, ''));
+            const targetTotal = parseFloat(settings.totalGoal);
+            const monthlyAdd = parseFloat(settings.monthlyContribution || 0);
+            
+            let requiredCAGR = 0;
+            let cagrText = "";
+
+            if (currentTotal >= targetTotal) {
+                cagrText = "目標已達成，無需額外報酬率";
+            } else if (remainingYears <= 0) {
+                cagrText = "目標日期已過";
+            } else {
+                // 簡單版: 終值 = (現值 * (1+r)^n) + (年金 * ((1+r)^n - 1)/r)
+                // 這裡使用更直觀的簡化估算: 
+                // 1. 計算純靠本金投入後的預期終值 (Current + Monthly * Months)
+                // 2. 計算缺口，並換算成現有資產所需的額外增長率
+                
+                const totalFuturePrincipal = currentTotal + (monthlyAdd * 12 * remainingYears);
+                
+                if (totalFuturePrincipal >= targetTotal) {
+                     cagrText = "0% (僅靠本金投入即可達成)";
+                } else {
+                    // 假設缺口需由「現有資產」與「未來投入」共同增長來填補
+                    // 這是一個複雜的 IRR 計算，為了給 AI 一個參考錨點，我們使用簡化公式：
+                    // 假設整筆資金(含未來投入的一半)在整個期間複利
+                    const effectivePrincipal = currentTotal + (monthlyAdd * 12 * remainingYears * 0.5);
+                    if (effectivePrincipal > 0) {
+                        const rawCagr = (Math.pow(targetTotal / effectivePrincipal, 1 / remainingYears) - 1) * 100;
+                        requiredCAGR = rawCagr.toFixed(2);
+                        cagrText = `${requiredCAGR}%`;
+                    } else {
+                        cagrText = "無法計算 (本金過低)";
+                    }
+                }
+            }
+            
+            // --- Updated Prompt with Quality Audit & Structure ---
+            const prompt = `
+            你現在是我的專業財務顧問與資產品質分析師。請撰寫一份分析報告。
+
+            **【開場白指引】**
+            請扮演一位專業且溫暖的財務顧問。在報告開頭，請用自然、令人安心的語氣向客戶問好，並務必在開場白中提及：距離目標僅剩約 ${remainingYears} 年，以及目標金額為 ${parseFloat(settings.totalGoal).toLocaleString()} 萬台幣。請不要死板地照抄數據，而是將其融入對話中，讓客戶感到被重視與鼓勵。
+            
+            【背景資訊】
+            - 今天的日期：${now.toLocaleDateString()}
+            - 目標達成日期：${settings.targetDate}
+            - 剩餘時間：約 ${remainingYears} 年
+            
+            【財務運算結果 (系統已預先計算)】
+            - **達成目標所需的推估年化報酬率 (Required CAGR)：${cagrText}**
+            - (請根據此數值評估目標的難易度，例如：若大於 10% 視為積極/困難，5-8% 為合理，小於 5% 為保守)
+
+            【資產數據】
+            - 總資產目標：${settings.totalGoal} 萬 TWD
+            - 目前總資產 (含現金)：${document.getElementById('totalAssetDisplay').innerText} 萬 TWD
+            - 備用現金 (War Chest)：${cash} 萬 TWD
+            - **每月可額外投入金額 (Monthly Contribution)：${settings.monthlyContribution || 0} 萬 TWD**
+            - 設定的目標配置比例：台股 ${settings.ratios.tw}%, 美股 ${settings.ratios.us}%, 債券 ${settings.ratios.bond}%
+            
+            【目前詳細持倉】
+            ${JSON.stringify(portfolio)}
+
+            請以繁體中文撰寫一份專業的「AI智能資產配置與品質健檢」，**必須**包含以下六個章節標題與內容：
+
+            1. **目標進度分析 (Goal Progress Analysis)**
+               - 計算目前的達成率。
+               - **關鍵**：請將「每月投入 ${settings.monthlyContribution || 0} 萬」納入考量，參考系統提供的 Required CAGR (${cagrText}) 來評估達成目標的可行性。
+               - 給予一段信心喊話。
+
+            2. **再平衡建議 (Rebalancing Recommendations)**
+               - 比較目前實際比例與目標比例的差距。
+               - 針對現金部位及未來的每月投入資金，提出具體的部署建議 (買入哪類資產、金額多少)。
+
+            3. **資產品質健檢 (Asset Quality Audit)**
+               - **非常重要**：請針對投資組合中的具體標的 (例如 ${portfolio.map(p=>p.symbol).join(', ')}) 進行個別點評。
+               - 評估其費用率、追蹤誤差或是否符合長期持有的標準。
+               - 指出哪些是優質核心資產，哪些可能有潛在風險 (如過度集中、槓桿損耗)。
+
+            4. **下一步行動 (Action Plan)**
+               - 列出 3到5 個具體的執行步驟, 並依執行順序排列 (例如：立即買入XXX、定期定額調整為XXX)。
+
+ 
+            5. **退休提領策略 (Retirement Withdraw Strategies)**
+               - 指導客戶當目標資產達成後的可採用的提領策略。
+               - 針對可行退休提領策略進行1到10年提領模擬及建議。並考慮可能的通膨因素,包含每年的提領金額,剩餘資產金額等.
+               - 對於退休後可能面臨的風險給予提醒及建議(表慮通膨與餘命)。
+
+            6. **投資小叮嚀 (Advisor's Insights)**
+               - 針對目前市場環境或投資心態給予專業建議。
+               - 針對資產目標達成的若干年後的可能資產規模, 給予投資人堅持的期盼, 並給予勉勵。
+               - 最後附上幾段投資哲學或格言並送上祝福
+
+
+            請使用 Markdown 格式輸出。重點數字請加粗。語氣請專業、客觀且具鼓勵性。
+            `;
+            
+            loading.classList.remove('hidden');
+            container.classList.add('hidden');
+            btns.classList.add('hidden');
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${settings.geminiApiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                if (!response.ok) throw new Error('API Error');
+                const data = await response.json();
+                const markdownText = data.candidates[0].content.parts[0].text;
+                
+                savedAiReport = markdownText;
+                
+                const result = document.getElementById('aiResult');
+                if (result) {
+                    result.innerHTML = marked.parse(markdownText);
+                    
+                }
+                
+                updateBlueprintTabContent(savedAiReport);
+
+                loading.classList.add('hidden');
+                container.classList.remove('hidden');
+                btns.classList.remove('hidden');
+                
+                saveData();
+                
+            } catch (error) {
+                console.error(error);
+                alert('AI 分析失敗，請檢查 API Key 或網路連線。');
+                const apiKeySection = document.getElementById('apiKeySection');
+                if (apiKeySection) apiKeySection.classList.remove('hidden');
+                loading.classList.add('hidden');
+            }
+        }
+
+        function updateBlueprintTabContent(markdown) {
+            const blueprintContent = document.getElementById('blueprintContent');
+            if(blueprintContent) {
+                // Render Markdown in Blueprint Tab with STANDARDIZED STYLES
+                blueprintContent.innerHTML = `
+                    <div class="ai-content p-6 ai-report-style">
+                        ${marked.parse(markdown)}
+                    </div>
+                    <div class="flex justify-center gap-4 mt-8 no-print">
+                        <button onclick="window.print()" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold transition flex items-center gap-2">
+                            <i class="ph-bold ph-printer"></i> 列印 / PDF
+                        </button>
+                        <button onclick="openAiModal(true)" class="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-bold transition flex items-center gap-2">
+                            <i class="ph-bold ph-magic-wand"></i> 重新分析
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
